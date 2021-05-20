@@ -21,8 +21,49 @@
 #define CRC16_INIT 0xFFFF
 #define CP_ADDR 0x0005
 #define PU_ADDR 0x0006
-#define UNPACK_ALL FALSE 
+#define UNPACK_ALL TRUE 
 #define MARK_ALL FALSE
+#define STATUS_PERIOD 77
+#define SEND_STATUS_TO 11
+#define COMPOSED_MASK_DEST 0x0008
+#define COMPOSED_MASK_SRC 0x0009
+#define MASK_DEST 0x0010
+#define MASK_SRC 0x000A
+#define TU_TYPE 0x000003
+#define TU_SRC_MASK 0x0001
+#define TU_SRC_COM_INDEX TRUE
+#define TU_PRIM_TO_SEC 2
+#define TU_SEC_TO_PRIMK 3
+#define KEEP_LOG FALSE
+#define LOG_COMPOSED_TYPE 0x0006
+#define LOG_PACK_ALL FALSE
+#define LOG_UNPACK_ALL TRUE
+#define LOG_COMPOSED_TYPE_TO_PACK 0x0007
+#define SOURCE_ID 0x000021
+#define STATUS_REQUEST_MESSAGE_TYPE 0x0003
+
+void FillMapWordToPtr(CMapWordToPtr& map)
+{
+    map.RemoveAll();
+    map.SetAt((WORD)0x100, NULL);
+    map.SetAt((WORD)0x200, NULL);
+    map.SetAt((WORD)0x300, NULL);
+}
+
+BOOL CheckMapWordToPtr(const CMapWordToPtr& map)
+{
+    /*POSITION pos = map.GetStartPosition();
+    while (pos != NULL)
+    {
+        WORD wType;
+        void* pTemp;
+        map.GetNextAssoc(pos, wType, pTemp);
+        CString str;
+        str.Format(_T("%04X "), wType);
+        std::cout << "map = " << str.GetBuffer() << std::endl;
+    }*/
+    return TRUE;
+}
 
 class TestSettings : public ::testing::Test {
 public:
@@ -58,6 +99,45 @@ public:
 
         g_Settings.m_bUnpackAll = UNPACK_ALL;
         g_Settings.m_bMarkAll = MARK_ALL;
+        FillMapWordToPtr(g_Settings.m_mapMsgTypesToMark);
+
+        g_Settings.m_nStatusPeriod = STATUS_PERIOD;
+        g_Settings.m_iSendStatTO = SEND_STATUS_TO;
+
+        g_Settings.m_MarkComposedMask = CSettings::MESSAGETYPE();
+        g_Settings.m_MarkComposedMask.m_wDestMask = COMPOSED_MASK_DEST;
+        g_Settings.m_MarkComposedMask.m_wSrcMask = COMPOSED_MASK_SRC;
+
+        g_Settings.m_MarkNestedMask = CSettings::MESSAGETYPE();
+        g_Settings.m_MarkNestedMask.m_wDestMask = MASK_DEST;
+        g_Settings.m_MarkNestedMask.m_wSrcMask = MASK_SRC;
+
+        //***
+        CSettings::MESSAGETYPE typeStatus(0x0007, 0x1008);
+        g_Settings.m_mapMsgTypes.SetAt(0x0001, typeStatus);
+        CSettings::MESSAGETYPE typeStatus1(0x0008, 0x1009);
+        g_Settings.m_mapMsgTypes.SetAt(0x0002, typeStatus1);
+
+        //***
+        g_Settings.m_StatusHdr = CSettings::MESSAGETYPE(0x0000, 0x20);
+        g_Settings.m_StatusMsg =
+            CSettings::MESSAGETYPE(g_Settings.m_wComposedType);
+
+        g_Settings.m_TUType = TU_TYPE;
+        g_Settings.m_TUSrcMask = TU_SRC_MASK;
+        g_Settings.m_TUSrcComMsgIndex = TU_SRC_COM_INDEX;
+        g_Settings.m_TUPrimToSecSrc = TU_PRIM_TO_SEC;
+        g_Settings.m_TUSecToPrimSrc = TU_SEC_TO_PRIMK;
+
+        g_Settings.m_bKeepLog = KEEP_LOG;
+        g_Settings.m_wLogComposedType = LOG_COMPOSED_TYPE;
+        g_Settings.m_bLogPackAll = LOG_PACK_ALL;
+
+        g_Settings.m_wLogComposedTypeToPack = LOG_COMPOSED_TYPE_TO_PACK;
+        g_Settings.m_bLogUnpackAll = LOG_UNPACK_ALL;
+
+        g_Settings.m_wSourceID = SOURCE_ID;
+        g_Settings.m_wStatusRequestMessageType = STATUS_REQUEST_MESSAGE_TYPE;
     }
     ~TestSettings() { }
     void SetUp() { }
@@ -104,6 +184,36 @@ void t1()
 
     ASSERT_EQ(g_Settings.m_bUnpackAll, UNPACK_ALL);
     ASSERT_EQ(g_Settings.m_bMarkAll, MARK_ALL);
+    BOOL res = CheckMapWordToPtr(g_Settings.m_mapMsgTypesToMark);
+    ASSERT_EQ(res, TRUE);
+
+    ASSERT_EQ(g_Settings.m_nStatusPeriod, STATUS_PERIOD);
+    ASSERT_EQ(g_Settings.m_iSendStatTO, SEND_STATUS_TO);
+
+    ASSERT_EQ(g_Settings.m_MarkComposedMask.m_wDestMask, COMPOSED_MASK_DEST);
+    ASSERT_EQ(g_Settings.m_MarkComposedMask.m_wSrcMask, COMPOSED_MASK_SRC);
+    ASSERT_EQ(g_Settings.m_MarkNestedMask.m_wDestMask, MASK_DEST);
+    ASSERT_EQ(g_Settings.m_MarkNestedMask.m_wSrcMask, MASK_SRC);
+
+    // POSITION pos = g_Settings.m_mapMsgTypes.GetStartPosition(); //***
+    // g_Settings.m_StatusHdr; //***
+    // g_Settings.m_StatusMsg; //***
+
+    ASSERT_EQ(g_Settings.m_TUType, TU_TYPE);
+    ASSERT_EQ(g_Settings.m_TUSrcMask, TU_SRC_MASK);
+    ASSERT_EQ(g_Settings.m_TUSrcComMsgIndex, TU_SRC_COM_INDEX);
+    ASSERT_EQ(g_Settings.m_TUPrimToSecSrc, TU_PRIM_TO_SEC);
+    ASSERT_EQ(g_Settings.m_TUSecToPrimSrc, TU_SEC_TO_PRIMK);
+
+    ASSERT_EQ(g_Settings.m_bKeepLog, KEEP_LOG);
+    ASSERT_EQ(g_Settings.m_wLogComposedType, LOG_COMPOSED_TYPE);
+    ASSERT_EQ(g_Settings.m_bLogPackAll, LOG_PACK_ALL);
+
+    ASSERT_EQ(g_Settings.m_wLogComposedTypeToPack, LOG_COMPOSED_TYPE_TO_PACK);
+    ASSERT_EQ(g_Settings.m_bLogUnpackAll, LOG_UNPACK_ALL);
+
+    ASSERT_EQ(g_Settings.m_wSourceID, SOURCE_ID);
+    ASSERT_EQ(g_Settings.m_wStatusRequestMessageType, STATUS_REQUEST_MESSAGE_TYPE);
     //EXPECT_TRUE(true);
 }
 
