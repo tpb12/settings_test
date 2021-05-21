@@ -148,8 +148,10 @@ protected:
 
 void t1()
 {
-    g_Settings.Save(SET_FILE_NAME);
-    g_Settings.Load(SET_FILE_NAME);
+    BOOL res = g_Settings.Save(SET_FILE_NAME);
+    EXPECT_TRUE(res);
+    res = g_Settings.Load(SET_FILE_NAME);
+    EXPECT_TRUE(res);
     //g_Settings.MakeStatusMsg();
 
     EXPECT_EQ(g_Settings.m_dwPollingPeriod, POLLING_PERIOD);
@@ -158,11 +160,11 @@ void t1()
     EXPECT_EQ(g_Settings.m_bShowMessageErrors, SHOW_MESSAGE_ERRORS);
     EXPECT_EQ(g_Settings.m_bShowCOMErrors, SHOW_COM_ERRORS);
 
-    ASSERT_STREQ(g_Settings.m_strSettingsReportPath, SETTINGS_REPORT_PATH);
+    ASSERT_STREQ(g_Settings.m_strSettingsReportPath.c_str(), SETTINGS_REPORT_PATH);
 
     EXPECT_EQ(g_Settings.m_nBufferSize, BUFFER_SIZE);
     EXPECT_EQ(g_Settings.m_nIncomingPort, INCOMING_PORT);
-    ASSERT_STREQ(g_Settings.m_strCOMSetup, COM_SETUP);
+    ASSERT_STREQ(g_Settings.m_strCOMSetup.c_str(), COM_SETUP);
 
     ASSERT_EQ(g_Settings.m_iCOMRttc, COM_RTTC);
     ASSERT_EQ(g_Settings.m_iCOMWttc, COM_WTTC);
@@ -184,7 +186,7 @@ void t1()
 
     ASSERT_EQ(g_Settings.m_bUnpackAll, UNPACK_ALL);
     ASSERT_EQ(g_Settings.m_bMarkAll, MARK_ALL);
-    BOOL res = CheckMapWordToPtr(g_Settings.m_mapMsgTypesToMark);
+    res = CheckMapWordToPtr(g_Settings.m_mapMsgTypesToMark);
     ASSERT_EQ(res, TRUE);
 
     ASSERT_EQ(g_Settings.m_nStatusPeriod, STATUS_PERIOD);

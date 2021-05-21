@@ -10,6 +10,14 @@
 #include <winsvc.h>
 #include <winsock2.h>
 
+#include <map>
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <algorithm>
+#include <sstream>
+
 #include "gtest/gtest.h"
 #include "../test/Settings.h"
 #include "../test/DataRoutines.h"
